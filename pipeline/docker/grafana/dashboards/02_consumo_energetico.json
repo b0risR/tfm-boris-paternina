@@ -1,0 +1,124 @@
+{
+  "uid": "tfm-consumo",
+  "title": "2. Consumo energético",
+  "description": "Análisis situacional del consumo. El eje temporal es window_start (tiempo de evento). Sigue las métricas habituales de gestión energética de edificios: perfil de carga, demanda pico, consumo base y factor de carga.",
+  "tags": ["tfm", "energía"],
+  "timezone": "utc",
+  "refresh": "30s",
+  "time": {"from": "now-7d", "to": "now"},
+  "schemaVersion": 39,
+  "templating": {
+    "list": [{
+      "name": "medio",
+      "label": "Tipo de medidor",
+      "type": "query",
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "timescaledb"},
+      "query": "SELECT DISTINCT meter_type FROM telemetry_metrics ORDER BY 1",
+      "current": {"text": "electricity", "value": "electricity"},
+      "refresh": 1,
+      "includeAll": false
+    }]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Demanda pico (kWh)",
+      "description": "Máximo consumo agregado en una hora. Es la magnitud por la que las eléctricas facturan la potencia contratada a un cliente comercial, no solo por la energía consumida.",
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "timescaledb"},
+      "gridPos": {"h": 5, "w": 6, "x": 0, "y": 0},
+      "fieldConfig": {"defaults": {"unit": "kwatth", "decimals": 0, "color": {"mode": "fixed", "fixedColor": "red"}}},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}},
+      "targets": [{
+        "refId": "A", "format": "table", "rawQuery": true, "editorMode": "code",
+        "rawSql": "WITH h AS (\n  SELECT window_start, sum(sum_reading) AS total\n  FROM telemetry_metrics\n  WHERE $__timeFilter(window_start) AND meter_type = '$medio'\n  GROUP BY 1\n)\nSELECT max(total) AS \"pico\" FROM h"
+      }]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Consumo base (kWh)",
+      "description": "El consumo agregado más bajo de todas las horas del periodo seleccionado. Es el diagnóstico de equipos permanentemente encendidos.",
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "timescaledb"},
+      "gridPos": {"h": 5, "w": 6, "x": 6, "y": 0},
+      "fieldConfig": {"defaults": {"unit": "kwatth", "decimals": 0, "color": {"mode": "fixed", "fixedColor": "orange"}}},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}},
+      "targets": [{
+        "refId": "A", "format": "table", "rawQuery": true, "editorMode": "code",
+        "rawSql": "WITH h AS (\n  SELECT window_start, sum(sum_reading) AS total\n  FROM telemetry_metrics\n  WHERE $__timeFilter(window_start) AND meter_type = '$medio'\n  GROUP BY 1\n)\nSELECT min(total) AS \"base\" FROM h"
+      }]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Factor de carga",
+      "description": "Media dividida entre pico. Mide cómo de bien se aprovecha la potencia contratada: cercano a 1 indica demanda plana, valores bajos indican picos puntuales que encarecen la factura sin aportar consumo.",
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "timescaledb"},
+      "gridPos": {"h": 5, "w": 6, "x": 12, "y": 0},
+      "fieldConfig": {"defaults": {"unit": "percentunit", "decimals": 3, "min": 0, "max": 1}},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}},
+      "targets": [{
+        "refId": "A", "format": "table", "rawQuery": true, "editorMode": "code",
+        "rawSql": "WITH h AS (\n  SELECT window_start, sum(sum_reading) AS total\n  FROM telemetry_metrics\n  WHERE $__timeFilter(window_start) AND meter_type = '$medio'\n  GROUP BY 1\n)\nSELECT avg(total) / NULLIF(max(total), 0) AS \"factor de carga\" FROM h"
+      }]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Edificios reportando",
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "timescaledb"},
+      "gridPos": {"h": 5, "w": 6, "x": 18, "y": 0},
+      "fieldConfig": {"defaults": {"unit": "short", "decimals": 0, "color": {"mode": "fixed", "fixedColor": "blue"}}},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}},
+      "targets": [{
+        "refId": "A", "format": "table", "rawQuery": true, "editorMode": "code",
+        "rawSql": "SELECT max(distinct_buildings) AS \"edificios\"\nFROM (\n  SELECT window_start, sum(distinct_buildings) AS distinct_buildings\n  FROM telemetry_metrics\n  WHERE $__timeFilter(window_start) AND meter_type = '$medio'\n  GROUP BY 1\n) q"
+      }]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Consumo kWh por Tipo de medidor",
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "timescaledb"},
+      "gridPos": {"h": 9, "w": 14, "x": 0, "y": 5},
+      "fieldConfig": {"defaults": {"unit": "kwatth", "custom": {"drawStyle": "line", "lineWidth": 2, "fillOpacity": 15}}},
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}},
+      "targets": [{
+        "refId": "A", "format": "time_series", "rawQuery": true, "editorMode": "code",
+        "rawSql": "SELECT\n  $__timeGroupAlias(window_start, $__interval),\n  meter_type AS metric,\n  sum(sum_reading) AS \"consumo\"\nFROM telemetry_metrics\nWHERE $__timeFilter(window_start)\nGROUP BY 1, meter_type\nORDER BY 1"
+      }]
+    },
+    {
+      "id": 6,
+      "type": "barchart",
+      "title": "Perfil de carga por hora del día (kWh)",
+      "description": "Agrupa las lecturas por hora del día (0 a 23) en una sola barra por hora para todas las fechas del análisis. Revela el patrón típico de actividad diaria de los edificios.",
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "timescaledb"},
+      "gridPos": {"h": 9, "w": 10, "x": 14, "y": 5},
+      "fieldConfig": {
+        "defaults": {"unit": "kwatth", "custom": {"fillOpacity": 80}},
+        "overrides": [
+          {"matcher": {"id": "byName", "options": "hora"}, "properties": [{"id": "unit", "value": "short"}]}
+        ]
+      },
+      "options": {"xField": "hora", "legend": {"showLegend": false}},
+      "targets": [{
+        "refId": "A", "format": "table", "rawQuery": true, "editorMode": "code",
+        "rawSql": "SELECT\n  EXTRACT(hour FROM window_start)::int AS \"hora\",\n  sum(sum_reading) AS \"consumo\"\nFROM telemetry_metrics\nWHERE $__timeFilter(window_start) AND meter_type = '$medio'\nGROUP BY 1\nORDER BY 1"
+      }]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Consumo kWh por Emplazamiento",
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "timescaledb"},
+      "gridPos": {"h": 9, "w": 24, "x": 0, "y": 14},
+      "fieldConfig": {"defaults": {"unit": "kwatth", "custom": {"drawStyle": "line", "lineWidth": 2, "fillOpacity": 15, "stacking": {"mode": "none"}}}},
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}},
+      "targets": [{
+        "refId": "A", "format": "time_series", "rawQuery": true, "editorMode": "code",
+        "rawSql": "SELECT\n  $__timeGroupAlias(window_start, $__interval),\n  'emplazamiento ' || site_id AS metric,\n  sum(sum_reading) AS \"consumo\"\nFROM telemetry_metrics\nWHERE $__timeFilter(window_start) AND meter_type = '$medio'\nGROUP BY 1, site_id\nORDER BY 1"
+      }]
+    }
+  ]
+}

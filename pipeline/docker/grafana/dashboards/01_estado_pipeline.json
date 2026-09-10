@@ -1,0 +1,142 @@
+{
+  "uid": "tfm-pipeline",
+  "title": "1. Estado del pipeline",
+  "description": "Salud del pipeline en tiempo real. El eje temporal es persisted_at (reloj de pared), no window_start (tiempo de evento): aquí interesa cuando llegaron los datos, no cuando se midieron. Contiene la evidencia en vivo de la latencia de ingesta.",
+  "tags": ["tfm", "operacional"],
+  "timezone": "utc",
+  "refresh": "5s",
+  "time": {"from": "now-15m", "to": "now"},
+  "schemaVersion": 39,
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Latencia publicado -> persistido (p95)",
+      "description": "Latencia de persistencia: publicación MQTT -> fila guardada. Objetivo: latencia < 25 s.",
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "postgres"},
+      "gridPos": {"h": 5, "w": 6, "x": 0, "y": 0},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 2,
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "green", "value": null},
+            {"color": "orange", "value": 23},
+            {"color": "red", "value": 25}
+          ]}
+        }
+      },
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "graphMode": "area"},
+      "targets": [{
+        "refId": "A",
+        "format": "table",
+        "rawQuery": true,
+        "editorMode": "code",
+        "rawSql": "SELECT percentile_cont(0.95) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (persisted_at - sim_publish_ts))) AS \"p95\"\nFROM telemetry_events\nWHERE $__timeFilter(persisted_at) AND sim_publish_ts IS NOT NULL"
+      }]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Antigüedad del último dato",
+      "description": "Tiempo desde la última escritura. Si crece sin parar, el pipeline está detenido o atascado.",
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "timescaledb"},
+      "gridPos": {"h": 5, "w": 6, "x": 6, "y": 0},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 0,
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "green", "value": null},
+            {"color": "orange", "value": 60},
+            {"color": "red", "value": 300}
+          ]}
+        }
+      },
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}},
+      "targets": [{
+        "refId": "A",
+        "format": "table",
+        "rawQuery": true,
+        "editorMode": "code",
+        "rawSql": "SELECT EXTRACT(EPOCH FROM (now() - max(persisted_at))) AS \"antiguedad\" FROM telemetry_metrics"
+      }]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Eventos procesados",
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "timescaledb"},
+      "gridPos": {"h": 5, "w": 6, "x": 12, "y": 0},
+      "fieldConfig": {"defaults": {"unit": "short", "decimals": 0, "color": {"mode": "fixed", "fixedColor": "blue"}}},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}},
+      "targets": [{
+        "refId": "A",
+        "format": "table",
+        "rawQuery": true,
+        "editorMode": "code",
+        "rawSql": "SELECT sum(event_count) AS \"eventos\" FROM telemetry_metrics WHERE $__timeFilter(persisted_at)"
+      }]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Ventanas escritas",
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "timescaledb"},
+      "gridPos": {"h": 5, "w": 6, "x": 18, "y": 0},
+      "fieldConfig": {"defaults": {"unit": "short", "decimals": 0, "color": {"mode": "fixed", "fixedColor": "purple"}}},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}},
+      "targets": [{
+        "refId": "A",
+        "format": "table",
+        "rawQuery": true,
+        "editorMode": "code",
+        "rawSql": "SELECT count(*) AS \"filas\" FROM telemetry_metrics WHERE $__timeFilter(persisted_at)"
+      }]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Latencia publicado -> persistido en el tiempo",
+      "description": "Percentiles 50 y 95 de (persisted_at - sim_publish_ts).",
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "postgres"},
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 5},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "max": 30,
+          "custom": {"drawStyle": "line", "lineWidth": 2, "fillOpacity": 10},
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "green", "value": null}, {"color": "red", "value": 25}
+          ]}
+        }
+      },
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}},
+      "targets": [{
+        "refId": "A",
+        "format": "time_series",
+        "rawQuery": true,
+        "editorMode": "code",
+        "rawSql": "SELECT\n  $__timeGroupAlias(persisted_at, $__interval),\n  percentile_cont(0.50) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (persisted_at - sim_publish_ts))) AS \"p50\",\n  percentile_cont(0.95) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (persisted_at - sim_publish_ts))) AS \"p95\"\nFROM telemetry_events\nWHERE $__timeFilter(persisted_at) AND sim_publish_ts IS NOT NULL\nGROUP BY 1\nORDER BY 1"
+      }]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Ritmo de escritura",
+      "description": "Eventos agregados y filas de métricas escritas por intervalo. Es el pulso del pipeline.",
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "timescaledb"},
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 5},
+      "fieldConfig": {"defaults": {"unit": "short", "custom": {"drawStyle": "bars", "fillOpacity": 60}}},
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}},
+      "targets": [{
+        "refId": "A",
+        "format": "time_series",
+        "rawQuery": true,
+        "editorMode": "code",
+        "rawSql": "SELECT\n  $__timeGroupAlias(persisted_at, $__interval),\n  sum(event_count) AS \"eventos\",\n  count(*) AS \"filas de métricas\"\nFROM telemetry_metrics\nWHERE $__timeFilter(persisted_at)\nGROUP BY 1\nORDER BY 1"
+      }]
+    }
+  ]
+}

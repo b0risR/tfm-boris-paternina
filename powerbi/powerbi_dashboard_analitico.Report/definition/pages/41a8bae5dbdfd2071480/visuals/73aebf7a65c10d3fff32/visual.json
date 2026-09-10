@@ -1,0 +1,285 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
+  "name": "73aebf7a65c10d3fff32",
+  "position": {
+    "x": 0,
+    "y": 458.42964200851242,
+    "z": 2000,
+    "height": 261.10034728568814,
+    "width": 727.952581142126,
+    "tabOrder": 2000
+  },
+  "visual": {
+    "visualType": "clusteredBarChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "public buildings"
+                    }
+                  },
+                  "Property": "site_id"
+                }
+              },
+              "queryRef": "public buildings.site_id",
+              "nativeQueryRef": "site_id",
+              "active": true
+            }
+          ]
+        },
+        "Series": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "public telemetry_events"
+                    }
+                  },
+                  "Property": "meter_type"
+                }
+              },
+              "queryRef": "public telemetry_events.meter_type",
+              "nativeQueryRef": "meter_type"
+            }
+          ]
+        },
+        "Tooltips": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "public telemetry_events"
+                        }
+                      },
+                      "Property": "building_id"
+                    }
+                  },
+                  "Function": 2
+                }
+              },
+              "queryRef": "Count(public telemetry_events.building_id)",
+              "nativeQueryRef": "Count of building_id"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "public telemetry_events"
+                    }
+                  },
+                  "Property": "Consumo Total"
+                }
+              },
+              "queryRef": "public telemetry_events.Consumo Total",
+              "nativeQueryRef": "Consumo Total"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "public telemetry_events"
+                  }
+                },
+                "Property": "Consumo Total"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "objects": {
+      "categoryAxis": [
+        {
+          "properties": {
+            "titleText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Emplazamiento'"
+                }
+              }
+            },
+            "axisType": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Categorical'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "valueAxis": [
+        {
+          "properties": {
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1000D"
+                }
+              }
+            },
+            "titleText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Consumo Total kWh'"
+                }
+              }
+            },
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "legend": [
+        {
+          "properties": {
+            "titleText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Tipo de medidor'"
+                }
+              }
+            },
+            "position": {
+              "expr": {
+                "Literal": {
+                  "Value": "'RightCenter'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "labels": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "labelPosition": {
+              "expr": {
+                "Literal": {
+                  "Value": "'OutsideEnd'"
+                }
+              }
+            },
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "8D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Consumo kWh por Emplazamiento'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "01edbab93c4356db3bfd",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "public telemetry_events"
+              }
+            },
+            "Property": "Consumo Total"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "a7cf6b952749e7f17b2d",
+        "field": {
+          "Aggregation": {
+            "Expression": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "public telemetry_events"
+                  }
+                },
+                "Property": "building_id"
+              }
+            },
+            "Function": 2
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "b0fd290616bf2da0e1aa",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "public telemetry_events"
+              }
+            },
+            "Property": "meter_type"
+          }
+        },
+        "type": "Categorical"
+      }
+    ]
+  }
+}

@@ -1,0 +1,41 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Docker / pipeline
+*.env
+.env
+
+# Datos (se generan/descargan localmente, no se versionan)
+pipeline/data/raw/
+pipeline/data/*.xlsx
+pipeline/data/*.parquet
+pipeline/data/power_measurements_parquet/
+pipeline/data/*.json
+
+# Registros de ejecucion de los procesos del pipeline.
+pipeline/logs*
+!pipeline/logs/.gitkeep
+
+# Editor
+.vscode/*
+!.vscode/settings.json
+
+# .vscode/settings.json si se versiona: es configuracion del proyecto (apunta
+# al interprete de .venv para que Pylance resuelva los imports del pipeline).
+
+
+# Checkpoints de Spark Structured Streaming
+pipeline/spark/checkpoints/
+
+# Power BI: cache local de sesion del Developer Mode (.pbip), no versionable.
+# El modelo (TMDL) y el reporte (PBIR) si se versionan: son texto y son lo
+# que hace el dashboard reproducible por terceros.
+powerbi/**/.pbi/
+powerbi/**/*.abf
+powerbi/**/cache.abf

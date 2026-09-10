@@ -1,0 +1,23 @@
+# Fuente de datos aprovisionada de forma declarativa
+
+apiVersion: 1
+
+datasources:
+  - name: TimescaleDB
+    # Identificador del plugin de PostgreSQL en Grafana moderno (13.x)
+    type: grafana-postgresql-datasource
+    uid: timescaledb
+    access: proxy
+    # Nombre del servicio y puerto INTERNO de la red de contenedores
+    url: timescaledb:5432
+    user: $__env{TIMESCALE_USER}
+    secureJsonData:
+      password: $__env{TIMESCALE_PASSWORD}
+    jsonData:
+      database: $__env{TIMESCALE_DB}
+      sslmode: disable
+      postgresVersion: 1700
+      # Le indica a Grafana que el backend es TimescaleDB
+      timescaledb: true
+    isDefault: true
+    editable: true

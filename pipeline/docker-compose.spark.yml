@@ -1,0 +1,73 @@
+# Overlay Spark: contenedoriza el job de Spark Structured Streaming.
+# Uso:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.spark.yml up -d
+#
+# Este overlay demuestra que Spark esta listo para contenedorizar:
+# toda su configuracion de conexion sale de `environment:`, con los
+# nombres de la red interna en vez de los `localhost:*` del host.
+
+services:
+  # Crea los topicos antes de arrancar Spark
+  create-topics:
+    image: apache/kafka:4.3.1
+    restart: "no"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists
+        --topic ${KAFKA_TOPIC_RAW:-iot.telemetry.raw}
+        --partitions ${KAFKA_NUM_PARTITIONS:-3} --replication-factor 1 &&
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists
+        --topic ${KAFKA_TOPIC_DLQ:-iot.telemetry.dlq}
+        --partitions ${KAFKA_NUM_PARTITIONS:-3} --replication-factor 1
+    networks: [tfm-net]
+
+  spark:
+    build:
+      context: .
+      dockerfile: spark/Dockerfile
+    container_name: tfm-spark
+    restart: unless-stopped
+    depends_on:
+      kafka:
+        condition: service_healthy
+      timescaledb:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      register-schema:
+        condition: service_completed_successfully
+      create-topics:
+        condition: service_completed_successfully
+    environment:
+      # Sobrescriben las SPARK_* del .env (que apuntan al host) con los nombres
+      # y puertos internos de la red de contenedores.
+      SPARK_KAFKA_BOOTSTRAP: kafka:9092
+      SPARK_PG_HOST: postgres
+      SPARK_PG_PORT: "5432"
+      SPARK_TS_HOST: timescaledb
+      SPARK_TS_PORT: "5432"
+      # Iguales en host y contenedor; mismos defaults que en el resto del compose.
+      POSTGRES_DB: ${POSTGRES_DB:-tfm_analytics}
+      POSTGRES_USER: ${POSTGRES_USER:-tfm}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tfm_dev_password}
+      TIMESCALE_DB: ${TIMESCALE_DB:-tfm_metrics}
+      TIMESCALE_USER: ${TIMESCALE_USER:-tfm}
+      TIMESCALE_PASSWORD: ${TIMESCALE_PASSWORD:-tfm_dev_password}
+      KAFKA_TOPIC_RAW: ${KAFKA_TOPIC_RAW:-iot.telemetry.raw}
+      APICURIO_URL: http://apicurio:8080
+    command: ["--trigger", "1 second"]
+    volumes:
+      # Las tablas de referencia (dimension de edificios y linea base por sensor)
+      - ./data:/app/data:ro
+      # El checkpoint de las consultas de streaming debe sobrevivir a un reinicio
+      # del contenedor para que reanude sin reprocesar.
+      - spark-checkpoints:/app/spark/checkpoints
+    networks: [tfm-net]
+
+volumes:
+  spark-checkpoints:

@@ -1,0 +1,39 @@
+{
+  "type": "record",
+  "name": "TelemetryEvent",
+  "namespace": "es.uea.tfm.iot",
+  "doc": "Lectura de un contador de energia de edificio. Reproduce lo que emitiria el contador.",
+  "fields": [
+    {
+      "name": "building_id",
+      "type": "string",
+      "doc": "Identificador del edificio que aloja el contador."
+    },
+    {
+      "name": "meter_type",
+      "type": {
+        "type": "enum",
+        "name": "MeterType",
+        "symbols": ["electricity", "chilledwater", "steam", "hotwater", "unknown"],
+        "default": "unknown",
+        "doc": "Medio que mide el contador."
+      },
+      "doc": "Tipo de contador. Se declaran los cuatro medios originales aunque el subconjunto en uso (emplazamientos 2, 3 y 5) solo contenga electricity, chilledwater y hotwater."
+    },
+    {
+      "name": "timestamp",
+      "type": {"type": "long", "logicalType": "timestamp-millis"},
+      "doc": "Instante de la medicion (event time). Se interpreta como HORA LOCAL del emplazamiento."
+    },
+    {
+      "name": "meter_reading",
+      "type": "double",
+      "doc": "Valor medido por el contador."
+    },
+    {
+      "name": "sim_publish_ts",
+      "type": {"type": "long", "logicalType": "timestamp-millis"},
+      "doc": "Epoch en milisegundos del instante del publish() en MQTT. Lo anade el simulador, no procede del dataset."
+    }
+  ]
+}

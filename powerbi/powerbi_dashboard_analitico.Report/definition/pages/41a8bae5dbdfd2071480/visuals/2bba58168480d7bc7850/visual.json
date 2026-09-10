@@ -1,0 +1,213 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
+  "name": "2bba58168480d7bc7850",
+  "position": {
+    "x": 736.3751729900514,
+    "y": 475.27482570436325,
+    "z": 2003,
+    "height": 103.47755698879807,
+    "width": 543.8587878946131,
+    "tabOrder": 2003
+  },
+  "visual": {
+    "visualType": "slicer",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "public telemetry_events"
+                    }
+                  },
+                  "Property": "event_day"
+                }
+              },
+              "queryRef": "public telemetry_events.event_day",
+              "nativeQueryRef": "event_day",
+              "active": true
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "public telemetry_events"
+                  }
+                },
+                "Property": "event_day"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "objects": {
+      "data": [
+        {
+          "properties": {
+            "startDate": {
+              "expr": {
+                "Literal": {
+                  "Value": "datetime'2026-07-15T00:00:00'"
+                }
+              }
+            },
+            "endDate": {
+              "expr": {
+                "Literal": {
+                  "Value": "datetime'2026-08-26T00:00:00'"
+                }
+              }
+            },
+            "mode": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Between'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {
+            "filter": {
+              "filter": {
+                "Version": 2,
+                "From": [
+                  {
+                    "Name": "p",
+                    "Entity": "public telemetry_events",
+                    "Type": 0
+                  }
+                ],
+                "Where": [
+                  {
+                    "Condition": {
+                      "And": {
+                        "Left": {
+                          "Comparison": {
+                            "ComparisonKind": 2,
+                            "Left": {
+                              "Column": {
+                                "Expression": {
+                                  "SourceRef": {
+                                    "Source": "p"
+                                  }
+                                },
+                                "Property": "event_day"
+                              }
+                            },
+                            "Right": {
+                              "Literal": {
+                                "Value": "datetime'2026-07-15T00:00:00'"
+                              }
+                            }
+                          }
+                        },
+                        "Right": {
+                          "Comparison": {
+                            "ComparisonKind": 3,
+                            "Left": {
+                              "Column": {
+                                "Expression": {
+                                  "SourceRef": {
+                                    "Source": "p"
+                                  }
+                                },
+                                "Property": "event_day"
+                              }
+                            },
+                            "Right": {
+                              "Literal": {
+                                "Value": "datetime'2026-08-27T00:00:00'"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "header": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Rango de medición'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "padding": [
+        {
+          "properties": {
+            "bottom": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "spacing": [
+        {
+          "properties": {
+            "verticalSpacing": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

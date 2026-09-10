@@ -1,0 +1,11 @@
+java=21.0.9-tem
+
+# Fija la version de Java para este proyecto vía SDKMAN (Java 21 LTS,
+# distribucion Eclipse Temurin) — requerido por PySpark 4.x (Java 17+).
+#
+# Uso:
+#   sdk env install   # instala esta version si no la tienes
+#   sdk env           # activa esta version al entrar en el repo
+#
+# Si SDKMAN no detecta automaticamente este archivo al hacer `cd`, activa
+# el auto-env en ~/.sdkman/etc/config: sdkman_auto_env=true

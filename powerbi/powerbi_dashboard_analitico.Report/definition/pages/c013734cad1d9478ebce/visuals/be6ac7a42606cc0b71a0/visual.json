@@ -1,0 +1,441 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
+  "name": "be6ac7a42606cc0b71a0",
+  "position": {
+    "x": 655.75893673133658,
+    "y": 400.67472647988092,
+    "z": 6,
+    "height": 304.41653393216177,
+    "width": 625,
+    "tabOrder": 6
+  },
+  "visual": {
+    "visualType": "barChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "public buildings"
+                    }
+                  },
+                  "Property": "building_id"
+                }
+              },
+              "queryRef": "public buildings.building_id",
+              "nativeQueryRef": "building_id",
+              "active": true
+            }
+          ]
+        },
+        "Series": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "public buildings"
+                    }
+                  },
+                  "Property": "primary_use"
+                }
+              },
+              "queryRef": "public buildings.primary_use",
+              "nativeQueryRef": "primary_use"
+            }
+          ]
+        },
+        "Tooltips": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "public telemetry_events"
+                        }
+                      },
+                      "Property": "meter_reading"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "CountNonNull(public telemetry_events.meter_reading)",
+              "nativeQueryRef": "Sum of meter_reading"
+            },
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "public buildings"
+                        }
+                      },
+                      "Property": "square_meters"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "CountNonNull(public buildings.square_meters)",
+              "nativeQueryRef": "Sum of square_meters"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "public telemetry_events"
+                    }
+                  },
+                  "Property": "Consumo por m2"
+                }
+              },
+              "queryRef": "public telemetry_events.Consumo por m2",
+              "nativeQueryRef": "Consumo por m2"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "public telemetry_events"
+                  }
+                },
+                "Property": "Consumo por m2"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ]
+      }
+    },
+    "objects": {
+      "valueAxis": [
+        {
+          "properties": {
+            "titleText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Consumo eléctrico kWh/m2'"
+                }
+              }
+            },
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            },
+            "invertAxis": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "categoryAxis": [
+        {
+          "properties": {
+            "titleText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Edificio'"
+                }
+              }
+            },
+            "switchAxisPosition": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "labels": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "labelPosition": {
+              "expr": {
+                "Literal": {
+                  "Value": "'InsideEnd'"
+                }
+              }
+            },
+            "labelOverflow": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Top 10 edificios más eficientes (kWh/m²)'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "2b4d89f63cad9cc78876",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "public buildings"
+              }
+            },
+            "Property": "building_id"
+          }
+        },
+        "type": "TopN",
+        "filter": {
+          "Version": 2,
+          "From": [
+            {
+              "Name": "subquery",
+              "Expression": {
+                "Subquery": {
+                  "Query": {
+                    "Version": 2,
+                    "From": [
+                      {
+                        "Name": "p",
+                        "Entity": "public buildings",
+                        "Type": 0
+                      },
+                      {
+                        "Name": "p1",
+                        "Entity": "public telemetry_events",
+                        "Type": 0
+                      }
+                    ],
+                    "Select": [
+                      {
+                        "Column": {
+                          "Expression": {
+                            "SourceRef": {
+                              "Source": "p"
+                            }
+                          },
+                          "Property": "building_id"
+                        },
+                        "Name": "field"
+                      }
+                    ],
+                    "OrderBy": [
+                      {
+                        "Direction": 1,
+                        "Expression": {
+                          "Measure": {
+                            "Expression": {
+                              "SourceRef": {
+                                "Source": "p1"
+                              }
+                            },
+                            "Property": "Consumo por m2"
+                          }
+                        }
+                      }
+                    ],
+                    "Top": 10
+                  }
+                }
+              },
+              "Type": 2
+            },
+            {
+              "Name": "p",
+              "Entity": "public buildings",
+              "Type": 0
+            }
+          ],
+          "Where": [
+            {
+              "Condition": {
+                "In": {
+                  "Expressions": [
+                    {
+                      "Column": {
+                        "Expression": {
+                          "SourceRef": {
+                            "Source": "p"
+                          }
+                        },
+                        "Property": "building_id"
+                      }
+                    }
+                  ],
+                  "Table": {
+                    "SourceRef": {
+                      "Source": "subquery"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "isLockedInViewMode": true
+      },
+      {
+        "name": "492a455e0a53fee8686b",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "public telemetry_events"
+              }
+            },
+            "Property": "Consumo por m2"
+          }
+        },
+        "type": "Advanced",
+        "filter": {
+          "Version": 2,
+          "From": [
+            {
+              "Name": "p1",
+              "Entity": "public telemetry_events",
+              "Type": 0
+            }
+          ],
+          "Where": [
+            {
+              "Condition": {
+                "And": {
+                  "Left": {
+                    "Comparison": {
+                      "ComparisonKind": 1,
+                      "Left": {
+                        "Measure": {
+                          "Expression": {
+                            "SourceRef": {
+                              "Source": "p1"
+                            }
+                          },
+                          "Property": "Consumo por m2"
+                        }
+                      },
+                      "Right": {
+                        "Literal": {
+                          "Value": "0.001D"
+                        }
+                      }
+                    }
+                  },
+                  "Right": {
+                    "Not": {
+                      "Expression": {
+                        "Comparison": {
+                          "ComparisonKind": 0,
+                          "Left": {
+                            "Measure": {
+                              "Expression": {
+                                "SourceRef": {
+                                  "Source": "p1"
+                                }
+                              },
+                              "Property": "Consumo por m2"
+                            }
+                          },
+                          "Right": {
+                            "Literal": {
+                              "Value": "null"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "isLockedInViewMode": true
+      },
+      {
+        "name": "eb0ee804d66bb1aff7af",
+        "field": {
+          "Aggregation": {
+            "Expression": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "public buildings"
+                  }
+                },
+                "Property": "square_meters"
+              }
+            },
+            "Function": 0
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "5b63382125ea075d790b",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "public buildings"
+              }
+            },
+            "Property": "primary_use"
+          }
+        },
+        "type": "Categorical"
+      }
+    ]
+  }
+}

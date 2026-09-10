@@ -1,0 +1,61 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
+  "name": "7ddd04e3dfb3eb7340a2",
+  "position": {
+    "x": 1009.5077943442045,
+    "y": 13.235501475311381,
+    "z": 2002,
+    "height": 462.03932422905189,
+    "width": 270.7261665404601,
+    "tabOrder": 2002
+  },
+  "visual": {
+    "visualType": "listSlicer",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "public telemetry_events"
+                    }
+                  },
+                  "Property": "primary_use"
+                }
+              },
+              "queryRef": "public telemetry_events.primary_use",
+              "nativeQueryRef": "primary_use",
+              "active": true
+            }
+          ]
+        }
+      }
+    },
+    "objects": {
+      "general": [
+        {
+          "properties": {}
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Uso de edificación'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

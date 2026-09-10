@@ -1,0 +1,4 @@
+relationship 9589a462-c140-cc75-88e8-6fc1a1b6275d
+	fromColumn: 'public telemetry_events'.building_id
+	toColumn: 'public buildings'.building_id
+

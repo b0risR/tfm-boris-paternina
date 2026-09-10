@@ -1,0 +1,204 @@
+table 'public telemetry_events'
+	lineageTag: 94a9856b-fc2e-4635-b564-3194f24818e3
+
+	measure 'Consumo Total' = SUM('public telemetry_events'[meter_reading])
+		lineageTag: 957ab0e6-0a29-491c-9eab-bfa46ea6603d
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Consumo por m2' = DIVIDE([Consumo Total], SUM('public buildings'[square_meters]))
+		lineageTag: ad8b8bf0-7f4a-40db-8aea-15a457ea0a00
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Total Anomalias' = SUM('public telemetry_events'[Es Anomalia])
+		formatString: 0
+		lineageTag: 99390f0d-ca94-4427-8652-2177fe220613
+
+	measure 'Total Edificios' = DISTINCTCOUNT('public telemetry_events'[building_id])
+		formatString: 0
+		lineageTag: 6245f7c5-999b-4b22-96ba-4af76813a510
+
+	column building_id
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(max)
+		lineageTag: aa929d1f-4ee8-44db-9015-84f62eb24c55
+		summarizeBy: none
+		sourceColumn: building_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column meter_type
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(max)
+		lineageTag: 4fd1dfcf-20e4-4353-afeb-e6431a124fa6
+		summarizeBy: none
+		sourceColumn: meter_type
+
+		annotation SummarizationSetBy = Automatic
+
+	column event_time
+		dataType: dateTime
+		isNullable: false
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 303c9c71-0f55-4c01-9001-5807087803f0
+		summarizeBy: none
+		sourceColumn: event_time
+
+		annotation SummarizationSetBy = Automatic
+
+	column meter_reading
+		dataType: double
+		sourceProviderType: double
+		lineageTag: ab811508-faaa-4f11-9705-6045d45633c2
+		summarizeBy: none
+		sourceColumn: meter_reading
+
+		annotation SummarizationSetBy = User
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column sim_publish_ts
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 19ef1093-6403-4115-a63a-7e72065e68a9
+		summarizeBy: none
+		sourceColumn: sim_publish_ts
+
+		annotation SummarizationSetBy = Automatic
+
+	column persisted_at
+		dataType: dateTime
+		isNullable: false
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 0ca1fc80-a068-4bb0-aadc-2dff752062ea
+		summarizeBy: none
+		sourceColumn: persisted_at
+
+		annotation SummarizationSetBy = Automatic
+
+	column baseline_p25
+		dataType: double
+		sourceProviderType: double
+		lineageTag: 0c3fb889-a9e6-4dc5-85ea-9b880c93adc8
+		summarizeBy: none
+		sourceColumn: baseline_p25
+
+		annotation SummarizationSetBy = User
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column baseline_p50
+		dataType: double
+		sourceProviderType: double
+		lineageTag: 239889de-8139-4e22-8e83-03682d62b519
+		summarizeBy: none
+		sourceColumn: baseline_p50
+
+		annotation SummarizationSetBy = User
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column baseline_p75
+		dataType: double
+		sourceProviderType: double
+		lineageTag: 86fd645a-ff6d-47db-bb33-d532e67a9380
+		summarizeBy: none
+		sourceColumn: baseline_p75
+
+		annotation SummarizationSetBy = User
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column baseline_iqr
+		dataType: double
+		sourceProviderType: double
+		lineageTag: 02ad8ff8-02f9-4354-a5f4-3cb29411fb45
+		summarizeBy: none
+		sourceColumn: baseline_iqr
+
+		annotation SummarizationSetBy = User
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Limite Superior' = 'public telemetry_events'[baseline_p75] + 1.5 * 'public telemetry_events'[baseline_iqr]
+		lineageTag: 7bd07993-416b-4069-8a5b-5eef57f97544
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Limite Inferior' = 'public telemetry_events'[baseline_p25] - 1.5 * 'public telemetry_events'[baseline_iqr]
+		lineageTag: efa10c77-bdaf-4399-8597-3914acb30ddf
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Es Anomalia' =
+			
+			IF(
+			    ISBLANK('public telemetry_events'[baseline_p75])
+			        || 'public telemetry_events'[baseline_iqr] = 0,
+			    BLANK(),
+			    IF(
+			        'public telemetry_events'[meter_reading] > 'public telemetry_events'[baseline_p75] + 5 * 'public telemetry_events'[baseline_iqr],
+			        1, 0
+			    )
+			)
+		formatString: 0
+		lineageTag: 35bdd956-4c11-4200-b060-c8c150adc1ff
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column primary_use
+		dataType: string
+		sourceProviderType: nvarchar(max)
+		lineageTag: 783058ad-4742-46ac-b5b0-5b83151e9501
+		summarizeBy: none
+		sourceColumn: primary_use
+
+		annotation SummarizationSetBy = Automatic
+
+	column event_day
+		dataType: dateTime
+		formatString: dd/mm/yyyy
+		sourceProviderType: date
+		lineageTag: 41dbbb8f-45db-480e-81f4-cde46fea4d3c
+		summarizeBy: none
+		sourceColumn: event_day
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+		annotation PBI_FormatHint = {"isDateTimeCustom":true}
+
+	partition 'public telemetry_events' = m
+		mode: directQuery
+		source =
+				let
+				    Source = PostgreSQL.Database("localhost:5433", "tfm_analytics"),
+				    public_telemetry_events = Source{[Schema="public",Item="telemetry_events"]}[Data],
+				    #"Merged Queries" = Table.NestedJoin(public_telemetry_events, {"building_id", "meter_type"}, #"public sensor_baseline", {"building_id", "meter_type"}, "public sensor_baseline", JoinKind.LeftOuter),
+				    #"Expanded public sensor_baseline" = Table.ExpandTableColumn(#"Merged Queries", "public sensor_baseline", {"baseline_p25", "baseline_p50", "baseline_p75", "baseline_iqr"}, {"baseline_p25", "baseline_p50", "baseline_p75", "baseline_iqr"}),
+				    #"Merged Queries1" = Table.NestedJoin(#"Expanded public sensor_baseline", {"building_id"}, #"public buildings", {"building_id"}, "public buildings", JoinKind.LeftOuter),
+				    #"Expanded public buildings" = Table.ExpandTableColumn(#"Merged Queries1", "public buildings", {"primary_use"}, {"primary_use"}),
+				    #"Duplicated Column" = Table.DuplicateColumn(#"Expanded public buildings", "event_time", "event_time - Copy"),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Duplicated Column",{{"event_time - Copy", type date}}),
+				    #"Renamed Columns" = Table.RenameColumns(#"Changed Type",{{"event_time - Copy", "event_day"}})
+				in
+				    #"Renamed Columns"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

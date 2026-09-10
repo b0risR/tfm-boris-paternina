@@ -1,0 +1,282 @@
+#
+# Secuencia de uso:
+#
+#   docker compose -f pipeline/docker-compose.yml up -d         # sube el stack base del pipeline
+#   python pipeline/schemas/register_schema.py                  # obligatorio antes de arrancar el bridge
+#   docker compose -f pipeline/docker-compose.yml --profile bridge up -d bridge      # arranque del bridge
+#
+#   docker compose -f pipeline/docker-compose.yml ps
+#   docker compose -f pipeline/docker-compose.yml down          # baja el stack conservando datos
+#   docker compose -f pipeline/docker-compose.yml down -v       # borra volumenes persistentes
+#
+# Spark Structured Streaming NO se containeriza: se ejecuta desde el venv del
+# host contra el listener EXTERNAL de Kafka (localhost:29092). Por eso Kafka
+# publica dos listeners.
+
+name: tfm-iot
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # Broker MQTT — punto de entrada de la telemetria de los medidores simulados
+  # ---------------------------------------------------------------------------
+  mosquitto:
+    image: eclipse-mosquitto:2.0.22
+    container_name: tfm-mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"   # MQTT — lo usa el simulador desde el host
+      - "9001:9001"   # WebSockets — solo inspeccion manual
+    volumes:
+      - ./docker/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto-data:/mosquitto/data
+    healthcheck:
+      # mosquitto_sub esta incluido en la imagen. -E sale tras suscribirse, asi
+      # que el chequeo confirma que el broker acepta conexiones.
+      test: ["CMD", "mosquitto_sub", "-h", "localhost", "-p", "1883", "-t", "$$SYS/#", "-C", "1", "-E", "-W", "3"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks: [tfm-net]
+
+  # ---------------------------------------------------------------------------
+  # Kafka en modo KRaft (sin Zookeeper). Nodo unico combinando los roles de 
+  # broker y controller.
+  # ---------------------------------------------------------------------------
+  kafka:
+    image: apache/kafka:4.3.1
+    container_name: tfm-kafka
+    restart: unless-stopped
+    ports:
+      - "${KAFKA_EXTERNAL_PORT:-29092}:${KAFKA_EXTERNAL_PORT:-29092}"   # listener EXTERNAL para Spark y utilidades
+    environment:
+      # --- Identidad y roles del nodo KRaft ---
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
+      # --- Listeners duales (clave para el desarrollo con Spark en el host) ---
+      # INTERNAL (kafka:9092): lo usan los contenedores de la red tfm-net.
+      # EXTERNAL (localhost:29092): lo usa todo lo que corre en el host.
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:${KAFKA_EXTERNAL_PORT:-29092},CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:${KAFKA_EXTERNAL_PORT:-29092}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+
+      # --- Parametros de cluster de un solo nodo ---
+      # Con un unico broker el factor de replicacion solo puede ser 1.
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
+      # --- Retencion 7 dias y auto-creacion de topicos ---
+      # Los topicos se auto-crean al primer uso con estos defaults del broker.
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_NUM_PARTITIONS: ${KAFKA_NUM_PARTITIONS:-3}
+      KAFKA_DEFAULT_REPLICATION_FACTOR: ${KAFKA_DEFAULT_REPLICATION_FACTOR:-1}
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD", "/opt/kafka/bin/kafka-broker-api-versions.sh", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+    networks: [tfm-net]
+
+  # ---------------------------------------------------------------------------
+  # Apicurio Schema Registry — validacion de esquemas Avro
+  # ---------------------------------------------------------------------------
+  apicurio:
+    image: apicurio/apicurio-registry:3.3.1
+    container_name: tfm-apicurio
+    restart: unless-stopped
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8080:8080"   # API REST del registro
+    environment:
+      APICURIO_STORAGE_KIND: kafkasql
+      APICURIO_KAFKASQL_BOOTSTRAP_SERVERS: kafka:9092
+
+      APICURIO_REST_DELETION_GROUP_ENABLED: "true"
+      APICURIO_REST_DELETION_ARTIFACT_ENABLED: "true"
+      APICURIO_REST_DELETION_ARTIFACT_VERSION_ENABLED: "true"
+      # Permite que la UI (otro origen: localhost:8888) llame a la API REST.
+      QUARKUS_HTTP_CORS_ENABLED: "true"
+      QUARKUS_HTTP_CORS_ORIGINS: "*"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/apis/registry/v3/groups"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks: [tfm-net]
+
+  # ---------------------------------------------------------------------------
+  # UI de Apicurio — es un contenedor separado del backend
+  # ---------------------------------------------------------------------------
+  apicurio-ui:
+    image: apicurio/apicurio-registry-ui:3.3.1
+    container_name: tfm-apicurio-ui
+    restart: unless-stopped
+    depends_on:
+      apicurio:
+        condition: service_healthy
+    ports:
+      - "8888:8080"
+    environment:
+      # URL que usara el NAVEGADOR para hablar con la API
+      REGISTRY_API_URL: http://localhost:8080/apis/registry/v3
+    networks: [tfm-net]
+
+  # ---------------------------------------------------------------------------
+  # register-schema — registra el contrato Avro en Apicurio (previo al bridge)
+  # ---------------------------------------------------------------------------
+  # Ejecuta register_schema.py con sus comprobaciones: lo lanza Compose para que 
+  # el bridge no pueda arrancar sin el esquema.
+  register-schema:
+    build:
+      context: .
+      dockerfile: bridge/Dockerfile
+    entrypoint: ["python", "/app/schemas/register_schema.py"]
+    restart: "no"
+    depends_on:
+      apicurio:
+        condition: service_healthy
+    environment:
+      APICURIO_URL: http://apicurio:8080
+      KAFKA_TOPIC_RAW: ${KAFKA_TOPIC_RAW:-iot.telemetry.raw}
+    networks: [tfm-net]
+
+  # ---------------------------------------------------------------------------
+  # Bridge — MQTT -> Kafka con validacion Avro
+  # ---------------------------------------------------------------------------
+  # `docker compose up -d --scale bridge=N` reparte el flujo MQTT entre las 
+  # N replicas en vez de duplicarlo; con una sola instancia el comportamiento 
+  # es identico al de una suscripcion normal.
+  # El --client-id de cada replica se deriva de su hostname.
+  bridge:
+    build:
+      context: .
+      dockerfile: bridge/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      apicurio:
+        condition: service_healthy
+      register-schema:
+        condition: service_completed_successfully
+    environment:
+      KAFKA_TOPIC_RAW: ${KAFKA_TOPIC_RAW:-iot.telemetry.raw}
+      KAFKA_TOPIC_DLQ: ${KAFKA_TOPIC_DLQ:-iot.telemetry.dlq}
+    command:
+      - "--broker-host=mosquitto"
+      - "--bootstrap-servers=kafka:9092"
+      - "--registry-url=http://apicurio:8080"
+      - "--shared-group=${BRIDGE_SHARED_GROUP:-}"
+    networks: [tfm-net]
+
+  # ---------------------------------------------------------------------------
+  # TimescaleDB — metricas agregadas por ventana temporal
+  # ---------------------------------------------------------------------------
+  timescaledb:
+    image: timescale/timescaledb:2.29.1-pg17-oss
+    container_name: tfm-timescaledb
+    restart: unless-stopped
+    ports:
+      - "${TIMESCALE_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${TIMESCALE_DB:-tfm_metrics}
+      POSTGRES_USER: ${TIMESCALE_USER:-tfm}
+      POSTGRES_PASSWORD: ${TIMESCALE_PASSWORD:-tfm_dev_password}
+    volumes:
+      - timescaledb-data:/var/lib/postgresql/data
+      - ./docker/timescaledb/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${TIMESCALE_USER:-tfm} -d ${TIMESCALE_DB:-tfm_metrics}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks: [tfm-net]
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL — eventos individuales enriquecidos
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:17-alpine
+    container_name: tfm-postgres
+    restart: unless-stopped
+    ports:
+      # 5433 en el host: 5432 ya lo ocupa TimescaleDB, que tambien es un
+      # PostgreSQL. Dentro de la red de contenedores ambos escuchan en 5432.
+      - "${POSTGRES_PORT:-5433}:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-tfm_analytics}
+      POSTGRES_USER: ${POSTGRES_USER:-tfm}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tfm_dev_password}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tfm} -d ${POSTGRES_DB:-tfm_analytics}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks: [tfm-net]
+
+  # ---------------------------------------------------------------------------
+  # Grafana — dashboards operativos sobre TimescaleDB
+  # ---------------------------------------------------------------------------
+  grafana:
+    image: grafana/grafana:13.0.6
+    container_name: tfm-grafana
+    restart: unless-stopped
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      # Entorno de desarrollo local: sin registro de usuarios.
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      # Acceso anonimo de solo lectura
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      POSTGRES_USER: ${POSTGRES_USER:-tfm}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tfm_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-tfm_analytics}
+      TIMESCALE_USER: ${TIMESCALE_USER:-tfm}
+      TIMESCALE_PASSWORD: ${TIMESCALE_PASSWORD:-tfm_dev_password}
+      TIMESCALE_DB: ${TIMESCALE_DB:-tfm_metrics}
+    volumes:
+      - grafana-data:/var/lib/grafana
+      # Aprovisionamiento declarativo
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./docker/grafana/dashboards:/etc/grafana/dashboards:ro
+    networks: [tfm-net]
+
+networks:
+  tfm-net:
+    driver: bridge
+
+volumes:
+  mosquitto-data:
+  kafka-data:
+  timescaledb-data:
+  postgres-data:
+  grafana-data:

@@ -1,0 +1,20 @@
+# Fuente de datos aprovisionada de forma declarativa.
+
+apiVersion: 1
+
+datasources:
+  - name: PostgreSQL
+    type: grafana-postgresql-datasource
+    uid: postgres
+    access: proxy
+    # Nombre del servicio y puerto INTERNO de la red de contenedores.
+    url: postgres:5432
+    user: $__env{POSTGRES_USER}
+    secureJsonData:
+      password: $__env{POSTGRES_PASSWORD}
+    jsonData:
+      database: $__env{POSTGRES_DB}
+      sslmode: disable
+      postgresVersion: 1700
+    isDefault: false
+    editable: true

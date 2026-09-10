@@ -1,0 +1,79 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
+  "name": "cb4f43bb58dd38fcf480",
+  "position": {
+    "x": 1034.7755698879807,
+    "y": 594.39433898216566,
+    "z": 2001,
+    "height": 125.13565031203488,
+    "width": 144.38728882157872,
+    "tabOrder": 2001
+  },
+  "visual": {
+    "visualType": "listSlicer",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "public telemetry_events"
+                    }
+                  },
+                  "Property": "meter_type"
+                }
+              },
+              "queryRef": "public telemetry_events.meter_type",
+              "nativeQueryRef": "meter_type",
+              "active": true
+            }
+          ]
+        }
+      }
+    },
+    "objects": {
+      "general": [
+        {
+          "properties": {}
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Tipo de medidor'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "fa6c88d9a8871e7fc28c",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "public telemetry_events"
+              }
+            },
+            "Property": "meter_type"
+          }
+        },
+        "type": "Categorical"
+      }
+    ]
+  }
+}

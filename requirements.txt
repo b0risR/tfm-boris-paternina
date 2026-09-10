@@ -1,0 +1,30 @@
+# Dependencias Python del proyecto (entorno venv + pip)
+#
+# Se requiere Java 17 o superior (21 LTS recomendado) para PySpark 4.x.
+#
+# Instalacion (que ./setup.sh hace de forma automatica):
+#   python3 -m venv .venv
+#   source .venv/bin/activate
+#   pip install -r requirements.txt
+#
+python-dotenv==1.0.1
+pytest==8.3.3
+
+pyspark==4.2.0            # motor de procesamiento (Structured Streaming, DataFrame API)
+
+# pandas y pyarrow se declaran explicitamente: `pip install pyspark==4.2.0` no los instala
+pandas==2.3.3
+pyarrow==22.0.0
+
+paho-mqtt==2.1.0          # cliente MQTT del bridge (suscriptor, callbacks)
+
+aiomqtt==2.5.1
+psycopg2-binary==2.9.9    # PostgreSQL / TimescaleDB
+fastavro==1.9.7           # serializacion Avro
+requests==2.32.3          # llamadas REST a Apicurio
+kafka-python==2.0.2       # cliente Kafka (testing/debug)
+
+# AvroSerializer del ecosistema Confluent (Apache 2.0)
+confluent-kafka[avro]==2.15.0
+
+kaggle==2.2.3              # CLI de descarga del dataset ASHRAE

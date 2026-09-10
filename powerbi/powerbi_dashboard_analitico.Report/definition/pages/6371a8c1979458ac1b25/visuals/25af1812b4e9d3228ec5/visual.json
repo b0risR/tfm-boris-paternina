@@ -1,0 +1,185 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
+  "name": "25af1812b4e9d3228ec5",
+  "position": {
+    "x": 13.722172900718606,
+    "y": 16.466607480862326,
+    "z": 1,
+    "height": 684.73642774585846,
+    "width": 536.53696041809746,
+    "tabOrder": 1
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "public telemetry_events"
+                    }
+                  },
+                  "Property": "building_id"
+                }
+              },
+              "queryRef": "public telemetry_events.building_id",
+              "nativeQueryRef": "building_id"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "public telemetry_events"
+                    }
+                  },
+                  "Property": "meter_type"
+                }
+              },
+              "queryRef": "public telemetry_events.meter_type",
+              "nativeQueryRef": "meter_type"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "public telemetry_events"
+                    }
+                  },
+                  "Property": "event_time"
+                }
+              },
+              "queryRef": "public telemetry_events.event_time",
+              "nativeQueryRef": "event_time"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "public telemetry_events"
+                    }
+                  },
+                  "Property": "meter_reading"
+                }
+              },
+              "queryRef": "public telemetry_events.meter_reading",
+              "nativeQueryRef": "meter_reading"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "public telemetry_events"
+                    }
+                  },
+                  "Property": "Limite Superior"
+                }
+              },
+              "queryRef": "Sum(public telemetry_events.Limite Superior)",
+              "nativeQueryRef": "Limite Superior"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "public telemetry_events"
+                  }
+                },
+                "Property": "event_time"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ]
+      }
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "393206c6b896075831a8",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "public telemetry_events"
+              }
+            },
+            "Property": "building_id"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "4a1a752d8c856e19dcdf",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "public telemetry_events"
+              }
+            },
+            "Property": "meter_type"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "fb42edc63290ac144e34",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "public telemetry_events"
+              }
+            },
+            "Property": "event_time"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "2846d6ecad24b764feaf",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "public telemetry_events"
+              }
+            },
+            "Property": "meter_reading"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "273ffaaa13bfc3c389c2",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "public telemetry_events"
+              }
+            },
+            "Property": "Limite Superior"
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+# Aprovisionamiento declarativo de dashboards
+
+apiVersion: 1
+
+providers:
+  - name: tfm
+    orgId: 1
+    folder: TFM
+    type: file
+    # Se permite editarlos en la interfaz para explorar, pero al reiniciar manda
+    # el fichero
+    allowUiUpdates: true
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/grafana/dashboards

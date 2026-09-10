@@ -1,0 +1,76 @@
+table 'public sensor_baseline'
+	lineageTag: e5a58bee-ce65-481b-8ef6-e65b3699bb11
+
+	column building_id
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(max)
+		lineageTag: a16fc79e-5b07-44f0-bb0f-f6b72c4f9804
+		summarizeBy: none
+		sourceColumn: building_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column meter_type
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(max)
+		lineageTag: 6a860ffc-e6c5-496c-a6e6-6f2aa4066948
+		summarizeBy: none
+		sourceColumn: meter_type
+
+		annotation SummarizationSetBy = Automatic
+
+	column baseline_p25
+		dataType: double
+		sourceProviderType: double
+		lineageTag: 910ff5ad-fee8-4f19-9db3-4570f53be27b
+		summarizeBy: none
+		sourceColumn: baseline_p25
+
+		annotation SummarizationSetBy = User
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column baseline_p50
+		dataType: double
+		sourceProviderType: double
+		lineageTag: e62f12bb-d1a3-4c92-87d3-3586fc31bdf0
+		summarizeBy: none
+		sourceColumn: baseline_p50
+
+		annotation SummarizationSetBy = User
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column baseline_p75
+		dataType: double
+		sourceProviderType: double
+		lineageTag: 4ca8e9b5-8955-4407-86ca-a7c8083a16e2
+		summarizeBy: none
+		sourceColumn: baseline_p75
+
+		annotation SummarizationSetBy = User
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column baseline_iqr
+		dataType: double
+		sourceProviderType: double
+		lineageTag: 4d1ccf1e-7de8-464e-95c0-c8a2295da14e
+		summarizeBy: none
+		sourceColumn: baseline_iqr
+
+		annotation SummarizationSetBy = User
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition 'public sensor_baseline' = m
+		mode: directQuery
+		source =
+				let
+				    Source = PostgreSQL.Database("localhost:5433", "tfm_analytics"),
+				    public_sensor_baseline = Source{[Schema="public",Item="sensor_baseline"]}[Data]
+				in
+				    public_sensor_baseline
+
