@@ -380,7 +380,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--verbose", action="store_true")
     args = p.parse_args()
     if not args.client_id:
-        args.client_id = f"tfm-bridge-{socket.gethostname()}"
+        args.client_id = (f"tfm-bridge-{socket.gethostname()}" if args.shared_group
+                          else "tfm-bridge")
     return args
 
 

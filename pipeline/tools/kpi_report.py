@@ -276,10 +276,12 @@ def construir_informe(ingesta, esquema, procesamiento, grafana, failovers) -> st
     if ingesta.get("descartados"):
         L += [f"| Mensajes aceptados por el broker y no entregados | "
               f"{_fmt(ingesta['descartados'], 0)} | 0 |", "",
-              "> El broker los confirmo al simulador pero no llego a entregarlos por tener la "
-              "cola de salida llena. Este descarte ya esta incluido en la tasa de perdida de "
-              "arriba (se resta lo persistido y lo invalidado en la DLQ del total ingestado "
-              "por Mosquitto); se muestra aparte para explicar su origen concreto.", ""]
+              "> Contador $SYS de Mosquitto (`messages/dropped`): mensajes que el broker "
+              "confirmo al publicador y luego no entrego por tener llena la cola de salida de "
+              "algun suscriptor. Es acumulado desde el arranque del contenedor de Mosquitto y "
+              "solo es atribuible a esta corrida si se parte de `docker compose down -v`. Un "
+              "valor alto con la tasa de perdida a 0 % suele ser la cola de una sesion "
+              "persistente huerfana (un bridge de una recreacion previa), no perdida real.", ""]
 
     if ingesta.get("persistidos_de_mas"):
         L += ["> Hay mas eventos persistidos que publicados en el flujo porque la medicion se ha "
