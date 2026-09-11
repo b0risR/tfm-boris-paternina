@@ -278,10 +278,12 @@ def construir_informe(ingesta, esquema, procesamiento, grafana, failovers) -> st
               f"{_fmt(ingesta['descartados'], 0)} | 0 |", "",
               "> Contador $SYS de Mosquitto (`messages/dropped`): mensajes que el broker "
               "confirmo al publicador y luego no entrego por tener llena la cola de salida de "
-              "algun suscriptor. Es acumulado desde el arranque del contenedor de Mosquitto y "
-              "solo es atribuible a esta corrida si se parte de `docker compose down -v`. Un "
-              "valor alto con la tasa de perdida a 0 % suele ser la cola de una sesion "
-              "persistente huerfana (un bridge de una recreacion previa), no perdida real.", ""]
+              "algun suscriptor. Se reinicia a cero con `docker compose restart mosquitto`, "
+              "pero las sesiones persistentes sobreviven en el volumen; una sesion "
+              "huerfana de una corrida anterior (p. ej. de un bridge replicado) puede seguir "
+              "encolando y sumando aqui aunque el bridge actual entregue todo: para partir en "
+              "cero hace falta `docker compose down -v`. Un valor alto con la tasa de "
+              "perdida a 0 % suele ser eso, no perdida real.", ""]
 
     if ingesta.get("persistidos_de_mas"):
         L += ["> Hay mas eventos persistidos que publicados en el flujo porque la medicion se ha "

@@ -66,6 +66,7 @@ tfm_boris_paternina/
 |-- requirements.txt            # Dependencias Python del pipeline
 |-- .sdkmanrc                   # Versión de Java fijada para PySpark
 |-- .gitignore
+|-- LICENSE                     # Licencia MIT
 |-- pipeline/
 |   |-- data/
 |   |   |-- raw/                    # Carpeta de descarga de ASHRAE Kaggle competition
@@ -89,13 +90,15 @@ tfm_boris_paternina/
 |   |   |-- stream_processing.py    # Script de procesamiento PySpark
 |   |   |-- database_writers.py     # Escritura idempotente hacia los sumideros
 |   |   |-- monitoring.py           # Supervisión del proceso Spark
+|   |   |-- Dockerfile              # Imagen de Spark para el arranque contenedorizado
 |   |-- common/                     # Utilidades compartidas: logging, conexiones, Apicurio
 |   |-- logs/                       # Logs de ejecución
 |   |-- tools/                      # Scripts de medición (KPIs), prueba de fallos, demo.py
 |   |-- .env.example                # Plantilla con credenciales de ejemplo para bases
 |   |                               #   de datos y configuración de tópicos Kafka
 |   |-- docker-compose.yml          # Orquesta Mosquitto, Bridge, Apicurio, Kafka,
-|                                   #   TimescaleDB, PostgreSQL y Grafana
+|   |                               #   TimescaleDB, PostgreSQL y Grafana
+|   |-- docker-compose.spark.yml    # Overlay opcional: arranca Spark contenedorizado
 |-- powerbi/
     |-- powerbi_dashboard_analitico.pbip            # Proyecto Power BI (formato PBIP)
     |-- powerbi_dashboard_analitico.Report/         # Definición de páginas y visuales
