@@ -1,6 +1,6 @@
 # Sistema escalable de microservicios para el procesamiento y análisis de datos IoT
 
-Pipeline de telemetría IoT containerizado e implementado con herramientas de código abierto, que sigue una **arquitectura Kappa**. El caso de uso es la supervisión de consumo energético de edificios: telemetría de medidores de electricidad, agua fría y agua caliente.
+Pipeline de telemetría IoT contenedorizado e implementado con herramientas de código abierto, que sigue una **arquitectura Kappa**. El caso de uso es la supervisión de consumo energético de edificios: telemetría de medidores de electricidad, agua fría y agua caliente.
 
 ## Visión general de la arquitectura
 
